@@ -2105,9 +2105,9 @@ void ObjectMgr::LoadItemTemplates()
         "stat_type1, stat_value1, stat_type2, stat_value2, stat_type3, stat_value3, stat_type4, stat_value4, stat_type5, stat_value5,  "
       // 37          38           39          40           41          42           43          44           45           46
         "stat_type6, stat_value6, stat_type7, stat_value7, stat_type8, stat_value8, stat_type9, stat_value9, stat_type10, stat_value10, "
-      // 47                       48                49          50     51              52         53              54 
+      // 47                       48                49          50     51              52         53              54
         "ScalingStatDistribution, ScalingStatValue, damageType, delay, RangedModRange, spellid_1, spelltrigger_1, spellcharges_1, "
-      // 55              56               57               58                       59         60              61                      
+      // 55              56               57               58                       59         60              61
         "spellppmRate_1, spellcooldown_1, spellcategory_1, spellcategorycooldown_1, spellid_2, spelltrigger_2, spellcharges_2, "
       // 62              63               64               65                       66         67              68
         "spellppmRate_2, spellcooldown_2, spellcategory_2, spellcategorycooldown_2, spellid_3, spelltrigger_3, spellcharges_3, "
@@ -2181,7 +2181,7 @@ void ObjectMgr::LoadItemTemplates()
         itemTemplate.ScalingStatDistribution = uint32(fields[47].GetUInt16());
         itemTemplate.ScalingStatValue        = fields[48].GetInt32();
 
-		itemTemplate.DamageType     = uint32(fields[49].GetUInt16());
+        itemTemplate.DamageType     = uint32(fields[49].GetUInt16());
         itemTemplate.Delay          = uint32(fields[50].GetUInt16());
         itemTemplate.RangedModRange = fields[51].GetFloat();
 

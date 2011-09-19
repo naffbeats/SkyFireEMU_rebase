@@ -681,7 +681,7 @@ struct ItemTemplate
         return (Stackable == 2147483647 || Stackable <= 0) ? uint32(0x7FFFFFFF-1) : uint32(Stackable);
     }
 
-	float getDPS() const;
+    float getDPS() const;
 
     int32 getFeralBonus(int32 extraDPS = 0) const
     {
