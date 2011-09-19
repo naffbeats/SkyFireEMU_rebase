@@ -105,6 +105,16 @@ extern DBCStorage <GtChanceToMeleeCritBaseEntry> sGtChanceToMeleeCritBaseStore;
 extern DBCStorage <GtChanceToMeleeCritEntry>     sGtChanceToMeleeCritStore;
 extern DBCStorage <GtChanceToSpellCritBaseEntry> sGtChanceToSpellCritBaseStore;
 extern DBCStorage <GtChanceToSpellCritEntry>     sGtChanceToSpellCritStore;
+
+extern DBCStorage <ItemDamageEntry>              sItemDamageAmmoStore;
+extern DBCStorage <ItemDamageEntry>              sItemDamageOneHandStore;
+extern DBCStorage <ItemDamageEntry>              sItemDamageOneHandCasterStore;
+extern DBCStorage <ItemDamageEntry>              sItemDamageRangedStore;
+extern DBCStorage <ItemDamageEntry>              sItemDamageThrownStore;
+extern DBCStorage <ItemDamageEntry>              sItemDamageTwoHandStore;
+extern DBCStorage <ItemDamageEntry>              sItemDamageTwoHandCasterStore;
+extern DBCStorage <ItemDamageEntry>              sItemDamageWandStore;
+
 extern DBCStorage <GtOCTClassCombatRatingScalarEntry> sGtOCTClassCombatRatingScalarStore;
 //extern DBCStorage <GtOCTRegenHPEntry>            sGtOCTRegenHPStore;
 //extern DBCStorage <GtOCTRegenMPEntry>            sGtOCTRegenMPStore; -- not used currently

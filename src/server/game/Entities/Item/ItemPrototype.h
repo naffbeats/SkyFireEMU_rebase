@@ -611,7 +611,7 @@ struct ItemTemplate
     _ItemStat ItemStat[MAX_ITEM_PROTO_STATS];
     uint32 ScalingStatDistribution;                         // id from ScalingStatDistribution.dbc
     uint32 ScalingStatValue;                                // mask for selecting column in ScalingStatValues.dbc
-    _Damage Damage[MAX_ITEM_PROTO_DAMAGES];
+    uint32 DamageType;
     uint32 Armor;
     uint32 HolyRes;
     uint32 FireRes;
@@ -681,15 +681,7 @@ struct ItemTemplate
         return (Stackable == 2147483647 || Stackable <= 0) ? uint32(0x7FFFFFFF-1) : uint32(Stackable);
     }
 
-    float getDPS() const
-    {
-        if (Delay == 0)
-            return 0;
-        float temp = 0;
-        for (int i = 0; i < MAX_ITEM_PROTO_DAMAGES; ++i)
-            temp+=Damage[i].DamageMin + Damage[i].DamageMax;
-        return temp*500/Delay;
-    }
+	float getDPS() const;
 
     int32 getFeralBonus(int32 extraDPS = 0) const
     {
@@ -726,6 +718,10 @@ struct ItemTemplate
         }
         return itemLevel;
     }
+
+    ItemDamageEntry const* FindItemDamageEntry() const;
+    float GetMinDamage() const { return floor(getDPS() * float(Delay) / 1000.0f * 0.8f + 0.5f); }
+    float GetMaxDamage() const { return floor(getDPS() * float(Delay) / 1000.0f * 1.2f + 0.5f); }
 
     bool IsPotion() const { return Class == ITEM_CLASS_CONSUMABLE && SubClass == ITEM_SUBCLASS_POTION; }
     bool IsWeaponVellum() const { return Class == ITEM_CLASS_TRADE_GOODS && SubClass == ITEM_SUBCLASS_WEAPON_ENCHANTMENT; }

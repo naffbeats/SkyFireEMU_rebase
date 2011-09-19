@@ -290,6 +290,65 @@ bool Item::IsNotEmptyBag() const
     return false;
 }
 
+ItemDamageEntry const * ItemTemplate::FindItemDamageEntry() const
+{
+	if (Class == ITEM_CLASS_WEAPON)
+	{
+		if (Quality >= ITEM_QUALITY_HEIRLOOM)                // heirlooms have it's own dbc...
+			return NULL;
+
+		ItemDamageEntry const* id = NULL;
+
+		switch(InventoryType)
+		{
+		case INVTYPE_WEAPON:
+		case INVTYPE_WEAPONMAINHAND:
+		case INVTYPE_WEAPONOFFHAND:
+			if (Flags2 & 0x200)                         // caster weapon flag
+				id = sItemDamageOneHandCasterStore.LookupEntry(ItemLevel);
+			else
+				id = sItemDamageOneHandStore.LookupEntry(ItemLevel);
+			break;
+		case INVTYPE_2HWEAPON:
+			if (Flags2 & 0x200)                         // caster weapon flag
+				id = sItemDamageTwoHandCasterStore.LookupEntry(ItemLevel);
+			else
+				id = sItemDamageTwoHandStore.LookupEntry(ItemLevel);
+			break;
+		case INVTYPE_AMMO:
+			id = sItemDamageAmmoStore.LookupEntry(ItemLevel);
+			break;
+		case INVTYPE_RANGED:
+		case INVTYPE_THROWN:
+		case INVTYPE_RANGEDRIGHT:
+			switch(SubClass)
+			{
+			case ITEM_SUBCLASS_WEAPON_BOW:
+			case ITEM_SUBCLASS_WEAPON_GUN:
+			case ITEM_SUBCLASS_WEAPON_CROSSBOW:
+				id = sItemDamageRangedStore.LookupEntry(ItemLevel);
+				break;
+			case ITEM_SUBCLASS_WEAPON_THROWN:
+				id = sItemDamageThrownStore.LookupEntry(ItemLevel);
+				break;
+			case ITEM_SUBCLASS_WEAPON_WAND:
+				id = sItemDamageWandStore.LookupEntry(ItemLevel);
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+
+		if (id)
+			return id;
+	}
+
+	return NULL;
+}
+
 void Item::UpdateDuration(Player* owner, uint32 diff)
 {
     if (!GetUInt32Value(ITEM_FIELD_DURATION))
@@ -470,6 +529,15 @@ bool Item::LoadFromDB(uint32 guid, uint64 owner_guid, Field* fields, uint32 entr
     }
 
     return true;
+}
+
+float ItemTemplate::getDPS() const
+{
+	ItemDamageEntry const* id = FindItemDamageEntry();
+	if (id)
+		return id->Value[Quality];
+
+	return 0.0f;
 }
 
 /*static*/
