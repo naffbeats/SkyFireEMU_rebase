@@ -9768,20 +9768,20 @@ void Unit::SetMinion(Minion *minion, bool apply, PetSlot slot)
                 SetPetGUID(minion->GetGUID());
                 SetMinionGUID(0);
             }
-   
+
             if(slot == PET_SLOT_UNK_SLOT)
             {
                 if(minion->isPet() && minion->ToPet()->getPetType() == HUNTER_PET)
                     assert(false);
                 slot = PET_SLOT_OTHER_PET;
             }
-           
+
             if(GetTypeId() == TYPEID_PLAYER)
             {
                 ToPlayer()->m_currentPetSlot = slot;
                 if(slot >= PET_SLOT_HUNTER_FIRST && slot <= PET_SLOT_HUNTER_LAST)
                     ToPlayer()->setPetSlotUsed(slot, true);
-            }			
+            }
         }
 
         if (minion->HasUnitTypeMask(UNIT_MASK_CONTROLABLE_GUARDIAN))

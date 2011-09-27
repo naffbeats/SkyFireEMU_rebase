@@ -3358,7 +3358,7 @@ void Spell::_handle_immediate_phase()
     m_diminishLevel = DIMINISHING_LEVEL_1;
     m_diminishGroup = DIMINISHING_NONE;
 
-	// handle some immediate features of the spell here
+    // handle some immediate features of the spell here
     HandleThreatSpells();
 
     PrepareScriptHitHandlers();

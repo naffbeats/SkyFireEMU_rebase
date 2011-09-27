@@ -2352,7 +2352,7 @@ class Player : public Unit, public GridObject<Player>
         // current pet slot
         PetSlot m_currentPetSlot;
         uint32 m_petSlotUsed;
-   
+
         void setPetSlotUsed(PetSlot slot, bool used)
         {
             if(used)
@@ -2360,7 +2360,7 @@ class Player : public Unit, public GridObject<Player>
             else
                 m_petSlotUsed &= ~(1 << uint32(slot));
         }
-   
+
         PetSlot getSlotForNewPet()
         {
             for(uint32 i = (uint32)PET_SLOT_HUNTER_FIRST; i <= (uint32)PET_SLOT_HUNTER_LAST; i++)
@@ -2370,7 +2370,7 @@ class Player : public Unit, public GridObject<Player>
                 return m_currentPetSlot;
             return PET_SLOT_HUNTER_LAST;
         }
-  
+
         // currently visible objects at player client
         typedef std::set<uint64> ClientGUIDs;
         ClientGUIDs m_clientGUIDs;

@@ -295,11 +295,11 @@ void Minion::InitStats(uint32 duration)
 
 void Minion::RemoveFromWorld()
 {
-	if (!IsInWorld())
-		return;
+    if (!IsInWorld())
+        return;
 
-	m_owner->SetMinion(this, false, PET_SLOT_UNK_SLOT);
-	TempSummon::RemoveFromWorld();
+    m_owner->SetMinion(this, false, PET_SLOT_UNK_SLOT);
+    TempSummon::RemoveFromWorld();
 }
 
 bool Minion::IsGuardianPet() const

@@ -99,7 +99,7 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petentry, uint32 petnumber, bool c
 
    if(slotID == PET_SLOT_ACTUAL_PET_SLOT)
        slotID = owner->m_currentPetSlot;
-   
+
     uint32 ownerid = owner->GetGUIDLow();
 
     QueryResult result;
@@ -151,8 +151,8 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petentry, uint32 petnumber, bool c
     // check temporary summoned pets like mage water elemental
     if (current && is_temporary_summoned)
     {
-       m_loading = false;        
-	   return false;
+       m_loading = false;
+       return false;
     }
 
     PetType pet_type = PetType(fields[16].GetUInt8());
@@ -171,8 +171,8 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petentry, uint32 petnumber, bool c
     if (current && owner->IsPetNeedBeTemporaryUnsummoned())
     {
         owner->SetTemporaryUnsummonedPetNumber(pet_number);
-        m_loading = false;        
-		return false;
+        m_loading = false;
+        return false;
     }
 
     Map* map = owner->GetMap();
@@ -191,8 +191,8 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petentry, uint32 petnumber, bool c
     {
         sLog->outError("Pet (guidlow %d, entry %d) not loaded. Suggested coordinates isn't valid (X: %f Y: %f)",
             GetGUIDLow(), GetEntry(), GetPositionX(), GetPositionY());
-        m_loading = false;        
-		return false;
+        m_loading = false;
+        return false;
     }
 
     setPetType(pet_type);
@@ -202,8 +202,8 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petentry, uint32 petnumber, bool c
     CreatureTemplate const* cinfo = GetCreatureInfo();
     if (cinfo->type == CREATURE_TYPE_CRITTER)
     {
-        m_loading = false;        
-		map->Add(this->ToCreature());
+        m_loading = false;
+        map->Add(this->ToCreature());
         return true;
     }
 
@@ -355,14 +355,14 @@ void Pet::SavePetToDB(PetSlot mode)
     Player* pOwner = (Player*)GetOwner();
     if (!pOwner)
         return;
-    
-	if(mode == PET_SLOT_ACTUAL_PET_SLOT)
+
+    if(mode == PET_SLOT_ACTUAL_PET_SLOT)
        mode = pOwner->m_currentPetSlot;
     if(mode >= PET_SLOT_HUNTER_FIRST && mode <= PET_SLOT_HUNTER_LAST && getPetType() != HUNTER_PET)
        assert(false);
     if(mode == PET_SLOT_OTHER_PET && getPetType() == HUNTER_PET)
        assert(false);
-   
+
     // not save pet as current if another pet temporary unsummoned
     if (mode == pOwner->m_currentPetSlot && pOwner->GetTemporaryUnsummonedPetNumber() &&
         pOwner->GetTemporaryUnsummonedPetNumber() != m_charmInfo->GetPetNumber())
@@ -436,8 +436,8 @@ void Pet::SavePetToDB(PetSlot mode)
     else
     {
         if(pOwner->m_currentPetSlot >= PET_SLOT_HUNTER_FIRST && pOwner->m_currentPetSlot <= PET_SLOT_HUNTER_LAST)
-           pOwner->setPetSlotUsed(pOwner->m_currentPetSlot, false);        
-		RemoveAllAuras();
+           pOwner->setPetSlotUsed(pOwner->m_currentPetSlot, false);
+        RemoveAllAuras();
         DeleteFromDB(m_charmInfo->GetPetNumber());
     }
 }
