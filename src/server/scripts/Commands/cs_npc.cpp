@@ -1149,10 +1149,10 @@ public:
         // visual effect for levelup
         pet->SetUInt32Value(UNIT_FIELD_LEVEL, level);
 
-        // caster have pet now
-        player->SetMinion(pet, true);
+		// caster have pet now
+		player->SetMinion(pet, true, PET_SLOT_UNK_SLOT);
 
-        pet->SavePetToDB(PET_SAVE_AS_CURRENT);
+		pet->SavePetToDB(PET_SLOT_ACTUAL_PET_SLOT);
         player->PetSpellInitialize();
 
         return true;

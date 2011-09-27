@@ -74,6 +74,7 @@
 #include "CharacterDatabaseCleaner.h"
 #include "InstanceScript.h"
 #include "AccountMgr.h"
+#include "Pet.h"
 
 #include <cmath>
 
@@ -775,8 +776,6 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
 
     for (uint8 i = 0; i < MAX_MOVE_TYPE; ++i)
         m_forced_speed_changes[i] = 0;
-
-    m_stableSlots = 0;
 
     /////////////////// Instance System /////////////////////
 
@@ -1797,7 +1796,7 @@ void Player::Update(uint32 p_time)
     Pet* pet = GetPet();
     if (pet && !pet->IsWithinDistInMap(this, GetMap()->GetVisibilityRange()) && !pet->isPossessed())
     //if (pet && !pet->IsWithinDistInMap(this, GetMap()->GetVisibilityDistance()) && (GetCharmGUID() && (pet->GetGUID() != GetCharmGUID())))
-        RemovePet(pet, PET_SAVE_NOT_IN_SLOT, true);
+        RemovePet(pet, PET_SLOT_ACTUAL_PET_SLOT, true);
 
     //we should execute delayed teleports only for alive(!) players
     //because we don't want player's ghost teleported from graveyard
@@ -1827,7 +1826,7 @@ void Player::setDeathState(DeathState s)
         clearResurrectRequestData();
 
         //FIXME: is pet dismissed at dying or releasing spirit? if second, add setDeathState(DEAD) to HandleRepopRequestOpcode and define pet unsummon here with (s == DEAD)
-        RemovePet(NULL, PET_SAVE_NOT_IN_SLOT, true);
+        RemovePet(NULL, PET_SLOT_ACTUAL_PET_SLOT, true);
 
         // save value before aura remove in Unit::setDeathState
         ressSpellId = GetUInt32Value(PLAYER_SELF_RES_SPELL);
@@ -4559,8 +4558,6 @@ bool Player::resetTalents(bool no_cost)
             return false;
         }
     }
-
-    RemovePet(NULL, PET_SAVE_NOT_IN_SLOT, true);
 
     for (uint32 i = 0; i < sTalentStore.GetNumRows(); ++i)
     {
@@ -16882,8 +16879,10 @@ bool Player::LoadFromDB(uint32 guid, SQLQueryHolder *holder)
     //"resettalents_time, trans_x, trans_y, trans_z, trans_o, transguid, extra_flags, stable_slots, at_login, zone, online, death_expire_time, taxi_path, instance_mode_mask, "
     // 39           40                41                 42                    43          44          45              46           47               48              49
     //"arenaPoints, totalHonorPoints, todayHonorPoints, yesterdayHonorPoints, totalKills, todayKills, yesterdayKills, chosenTitle, knownCurrencies, watchedFaction, drunk, "
-    // 50      51      52      53      54      55      56      57      58      59      60       61           62         63          64             65              66      67           68          69
-    //"health, power1, power2, power3, power4, power5, power6, power7, power8, power9, power10, instance_id, speccount, activespec, exploredZones, equipmentCache, ammoId, knownTitles, actionBars, grantableLevels FROM characters WHERE guid = '%u'", guid);
+    // 50      51      52      53      54      55      56      57      58      59      60       61           62         63          64             65              66
+   //"health, power1, power2, power3, power4, power5, power6, power7, power8, power9, power10, instance_id, speccount, activespec, exploredZones, equipmentCache, ammoId, "
+   // 67           68          69              70
+   //"knownTitles, actionBars, currentPetSlot, petSlotUsed FROM characters WHERE guid = '%u'", guid);
     PreparedQueryResult result = holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOADFROM);
 
     if (!result)
@@ -16969,6 +16968,9 @@ bool Player::LoadFromDB(uint32 guid, SQLQueryHolder *holder)
 
     // set which actionbars the client has active - DO NOT REMOVE EVER AGAIN (can be changed though, if it does change fieldwise)
     SetByteValue(PLAYER_FIELD_BYTES, 2, fields[65].GetUInt8());
+
+    m_currentPetSlot = (PetSlot)fields[69].GetUInt32();
+    m_petSlotUsed = fields[70].GetUInt32();
 
     InitDisplayIds();
 
@@ -17286,13 +17288,6 @@ bool Player::LoadFromDB(uint32 guid, SQLQueryHolder *holder)
     m_taxi.LoadTaxiMask(fields[17].GetCString());            // must be before InitTaxiNodesForLevel
 
     uint32 extraflags = fields[31].GetUInt16();
-
-    m_stableSlots = fields[32].GetUInt8();
-    if (m_stableSlots > MAX_PET_STABLES)
-    {
-        sLog->outError("Player can have not more %u stable slots, but have in DB %u", MAX_PET_STABLES, uint32(m_stableSlots));
-        m_stableSlots = MAX_PET_STABLES;
-    }
 
     m_atLoginFlags = fields[33].GetUInt16();
 
@@ -18038,7 +18033,7 @@ void Player::LoadPet()
     if (IsInWorld())
     {
         Pet *pet = new Pet(this);
-        if (!pet->LoadPetFromDB(this, 0, 0, true))
+        if (!pet->LoadPetFromDB(this, 0, 0, true, PET_SLOT_ACTUAL_PET_SLOT))
             delete pet;
     }
 }
@@ -18724,6 +18719,8 @@ void Player::SaveToDB()
     std::string sql_name = m_name;
     CharacterDatabase.EscapeString(sql_name);
 
+    //TODO: drop ammoid
+   //      drop stable_slots
     std::ostringstream ss;
     ss << "REPLACE INTO characters (guid, account, name, race, class, gender, level, xp, money, playerBytes, playerBytes2, playerFlags, "
         "map, instance_id, instance_mode_mask, position_x, position_y, position_z, orientation, "
@@ -18732,7 +18729,8 @@ void Player::SaveToDB()
         "trans_x, trans_y, trans_z, trans_o, transguid, extra_flags, stable_slots, at_login, zone, "
         "death_expire_time, taxi_path, arenaPoints, totalHonorPoints, todayHonorPoints, yesterdayHonorPoints, totalKills, "
         "todayKills, yesterdayKills, chosenTitle, knownCurrencies, watchedFaction, drunk, health, power1, power2, power3, "
-        "power4, power5, power6, power7, power8, power9, power10, latency, speccount, activespec, exploredZones, equipmentCache, ammoId, knownTitles, actionBars, grantableLevels) VALUES ("
+        "power4, power5, power6, power7, power8, power9, power10, latency, speccount, activespec, exploredZones, equipmentCache, ammoId, "
+       "knownTitles, actionBars, currentPetSlot, petSlotUsed) VALUES ("
         << GetGUIDLow() << ','
         << GetSession()->GetAccountId() << ", '"
         << sql_name << "', "
@@ -18796,7 +18794,7 @@ void Player::SaveToDB()
 
     ss << m_ExtraFlags << ',';
 
-    ss << uint32(m_stableSlots) << ',';                     // to prevent save uint8 as char
+    ss << uint32(0) << ", ";
 
     ss << uint32(m_atLoginFlags) << ',';
 
@@ -18868,6 +18866,9 @@ void Player::SaveToDB()
 
     ss << "',";
     ss << uint32(GetByteValue(PLAYER_FIELD_BYTES, 2));
+
+    ss << "," << m_currentPetSlot << "," << m_petSlotUsed;
+
     ss << ",";
     ss << uint32(m_grantableLevels);
     ss << ')';
@@ -18906,7 +18907,7 @@ void Player::SaveToDB()
 
     // save pet (hunter pet level and experience and all type pets health/mana).
     if (Pet* pet = GetPet())
-        pet->SavePetToDB(PET_SAVE_AS_CURRENT);
+        pet->SavePetToDB(PET_SLOT_ACTUAL_PET_SLOT);
 }
 
 // fast save function for item/money cheating preventing - save only inventory and money state
@@ -19668,7 +19669,7 @@ Pet* Player::GetPet() const
     return NULL;
 }
 
-void Player::RemovePet(Pet* pet, PetSaveMode mode, bool returnreagent)
+void Player::RemovePet(Pet* pet, PetSlot mode, bool returnreagent)
 {
     if (!pet)
         pet = GetPet();
@@ -19680,6 +19681,9 @@ void Player::RemovePet(Pet* pet, PetSaveMode mode, bool returnreagent)
         if (pet->m_removed)
             return;
     }
+
+    if(mode == PET_SLOT_ACTUAL_PET_SLOT)
+       mode = m_currentPetSlot;
 
     if (returnreagent && (pet || m_temporaryUnsummonedPetNumber) && !InBattleground())
     {
@@ -19710,26 +19714,28 @@ void Player::RemovePet(Pet* pet, PetSaveMode mode, bool returnreagent)
     if (!pet || pet->GetOwnerGUID() != GetGUID())
         return;
 
+    if(mode >= PET_SLOT_HUNTER_FIRST && mode <= PET_SLOT_HUNTER_LAST && pet->getPetType() != HUNTER_PET)
+       assert(false); //debug code.
+    if(mode == PET_SLOT_OTHER_PET && pet->getPetType() == HUNTER_PET)
+       assert(false); //debug code.
+
     pet->CombatStop();
 
-    if (returnreagent)
-    {
-        switch(pet->GetEntry())
+    switch(pet->GetEntry())
         {
-            //warlock pets except imp are removed(?) when logging out
-            case 1860:
-            case 1863:
-            case 417:
-            case 17252:
-                mode = PET_SAVE_NOT_IN_SLOT;
-                break;
-        }
+        //warlock pets except imp are removed(?) when logging out
+        case 1860:
+        case 1863:
+        case 417:
+        case 17252:
+            mode = PET_SLOT_DELETED;
+            break;
     }
 
     // only if current pet in slot
     pet->SavePetToDB(mode);
 
-    SetMinion(pet, false);
+    SetMinion(pet, false, PET_SLOT_UNK_SLOT);
 
     pet->AddObjectToRemoveList();
     pet->m_removed = true;
@@ -21586,7 +21592,7 @@ template<>
 inline void BeforeVisibilityDestroy<Creature>(Creature* t, Player* p)
 {
     if (p->GetPetGUID() == t->GetGUID() && t->ToCreature()->isPet())
-        ((Pet*)t)->Remove(PET_SAVE_NOT_IN_SLOT, true);
+        ((Pet*)t)->Remove(PET_SLOT_ACTUAL_PET_SLOT, true);
 }
 
 void Player::UpdateVisibilityOf(WorldObject* target)
@@ -24206,7 +24212,7 @@ void Player::UnsummonPetTemporaryIfAny()
         m_oldpetspell = pet->GetUInt32Value(UNIT_CREATED_BY_SPELL);
     }
 
-    RemovePet(pet, PET_SAVE_AS_CURRENT);
+    RemovePet(pet, PET_SLOT_ACTUAL_PET_SLOT);
 }
 
 void Player::ResummonPetTemporaryUnSummonedIfAny()
@@ -24742,7 +24748,7 @@ void Player::ActivateSpec(uint8 spec)
 
     // TO-DO: We need more research to know what happens with warlock's reagent
     if (Pet* pet = GetPet())
-        RemovePet(pet, PET_SAVE_NOT_IN_SLOT);
+        RemovePet(pet, PET_SLOT_ACTUAL_PET_SLOT, true);
 
     ClearComboPointHolders();
     ClearAllReactives();
